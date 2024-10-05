@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S</title>
+    <style>
+        body {
+            font-family: 'Georgia', sans-serif;
+            background-color: rgb(0, 0, 0); /* Set background to black */
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff; /* Change text color to white for contrast */
+            overflow: hidden;
+        }
+        .container {
+            border: 5px solid rgb(3, 3, 59); /* Blue outline */
+            border-radius: 50%; /* Circle shape */
+            width: 400px;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            animation: fadeIn 1s;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 30px rgba(0, 255, 255, 0.5); /* Neon effect */
+        }
+        .jarvis-text {
+            font-size: 50px;
+            text-align: center;
+            text-shadow: 0 0 10px #00f, 0 0 20px #00f; /* Blue glow effect */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8); /* Slightly transparent black overlay */
+            border-radius: 50%;
+            animation: pulsate 2s infinite; /* Pulsating effect */
+        }
+        @keyframes pulsate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .circular-wave {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid #00f; /* Blue border for wave effect */
+            box-shadow: 0 0 15px #00f, 0 0 30px #00f; /* Blue glow */
+            animation: wave 2s infinite;
+            transform: translate(-50%, -50%);
+        }
+        @keyframes wave {
+            0% { opacity: 0.7; }
+            50% { opacity: 0.3; }
+            100% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" onclick="startRecognition()">
+    <div class="overlay"></div>
+    <div class="circular-wave"></div>
+    <b><div class="jarvis-text">JARVIS</div></b>
+</div>
+
+<script>
+    const phonebook = {
+        "mummy": "+91 84129345632", // Replace with actual number
+        // Add other contacts as needed
+    };
+
+    let currentLang = 'en'; // Default language
+    let currentSong;
+    let passwordAttempted = false; // Track password attempt state
+    let selectedVoice; // Variable to hold the selected voice
+
+    // Function to populate available voices
+    function populateVoiceList() {
+        const voices = window.speechSynthesis.getVoices();
+        selectedVoice = voices.find(voice => voice.name === "Microsoft Zira Desktop") || voices[0]; // Example voice
+        console.log(voices); // Optional: log available voices to console
+    }
+
+    // Function to speak text
+    function speak(text, lang) {
+        const speech = new SpeechSynthesisUtterance();
+        speech.text = text;
+        speech.volume = 1;
+        speech.rate = 1.0;
+        speech.pitch = 1;
+        speech.lang = lang; // Set the language
+        speech.voice = selectedVoice; // Use the selected voice
+        window.speechSynthesis.speak(speech);
+    }
+
+    function isMathQuestion(input) {
+        return /^[\d\s\+\-\*\/\(\)]+$/.test(input);
+    }
+
+    function evaluateMathQuestion(input) {
+        try {
+            return eval(input);
+        } catch (error) {
+            return "Error in the math expression.";
+        }
+    }
+
+    function fetchWikipediaSummary(query) {
+        const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+        return fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error("Network response was not ok");
+                return response.json();
+            })
+            .then(data => data.extract) // Get the summary extract
+            .catch(() => "I couldn't retrieve information from Wikipedia.");
+    }
+
+    function talk(inputText) {
+        var input = inputText.toLowerCase();
+
+        // Greeting section
+        if (input.includes("how are you") || input.includes("hi")) {
+            speak("Hi! I am JARVIS AI assistant. How can I assist you today?", currentLang);
+        } else if (input.includes("good morning")) {
+            speak("Good Morning. How are you Today?", currentLang);
+        } else if (input.includes("i am fine")) {
+            speak("Me too! How can I help you today?", currentLang);
+        } else if (input.includes("what can you do?")) {
+            speak("I can answer questions, perform math calculations, and play songs.", currentLang);
+        } else if (input.includes("who are you")) {
+            speak("I'm JARVIS AI Assistant. Created by Ajinkya Sule.", currentLang);
+        } else if (input.includes("hello")) {
+            speak("Hello! What is your name?", currentLang);
+        } else if (input.includes("admin login")) {
+            speak("Please tell the password to login.", currentLang);
+            passwordAttempted = true; // Mark that password is being requested
+        } else if (input.includes("are you idiot")) {
+            speak("I'm here to help! If something's off, just let me know, and I'll do my best to fix it.", currentLang);
+        } else if (input.includes("my name is ajinkya")) {
+            speak("Welcome back boss. Your SA-1 Preparation is still remaining. Shall we start it?", currentLang);
+        } else if (passwordAttempted) {
+            if (input === "2468") {
+                speak("Access Allowed.", currentLang);
+                passwordAttempted = false; // Reset password state
+            } else {
+                speak("Access Denied.", currentLang);
+                passwordAttempted = false; // Reset password state
+            }
+        } else if (input.includes("what is your purpose")) {
+            speak("I'm JARVIS, My purpose is to help you find information, answer your questions, and assist you with your daily tasks to make your life easier.", currentLang);
+        }
+        // Math questions
+        else if (isMathQuestion(input)) {
+            let mathResult = evaluateMathQuestion(input);
+            speak("The answer is: " + mathResult, currentLang);
+        }
+        else if (input.includes("time")) {
+            let currentTime = new Date().toLocaleTimeString();
+            speak("The current time is: " + currentTime, currentLang);
+        } else if (input.includes("date")) {
+            let currentDate = new Date().toLocaleDateString();
+            speak("Today's date is: " + currentDate, currentLang);
+        } else if (input.includes("open google")) {
+            speak("Opening Google", currentLang);
+            window.open("https://google.com/", "_blank");
+        } else if (input.includes("open youtube")) {
+            speak("Opening Youtube.", currentLang);
+            window.open("https://youtube.com/", "_blank");
+        } else if (input.includes("open whatsapp")) {
+            speak("Opening Whatsapp.", currentLang);
+            window.open("https://web.whatsapp.com/", "_blank");
+        } else if (input.includes("play a song")) {
+            speak("Which song would you like to play? Say 'Song 1', 'Song 2', or 'Song 3'.", currentLang);
+        }
+        // Song selection
+        else if (input.includes("song 1")) {
+            stopAllSongs();
+            currentSong = document.getElementById("fluteSound");
+            currentSong.play();
+            speak("Playing Song 1 for you!", currentLang);
+        } else if (input.includes("song 2")) {
+            stopAllSongs();
+            currentSong = document.getElementById("song2");
+            currentSong.play();
+            speak("Playing Song 2 for you!", currentLang);
+        } else if (input.includes("song 3")) {
+            stopAllSongs();
+            currentSong = document.getElementById("song3");
+            currentSong.play();
+            speak("Playing Song 3 for you!", currentLang);
+        } else if (input.includes("stop song")) {
+            stopAllSongs();
+            speak("Stopping the song.", currentLang);
+        }
+        // Call functionality
+        else if (input.includes("call")) {
+            const name = input.split("call ")[1];
+            const number = phonebook[name.toLowerCase()];
+            if (number) {
+                speak("Calling " + name, currentLang);
+                window.open("tel:" + number);
+            } else {
+                speak("I couldn't find the number for " + name, currentLang);
+            }
+        } else {
+            fetchWikipediaSummary(input)
+                .then(summary => {
+                    speak(summary, currentLang);
+                });
+        }
+    }
+
+    function stopAllSongs() {
+        // Stop any currently playing song
+        if (currentSong) {
+            currentSong.pause();
+            currentSong.currentTime = 0; // Reset the song
+        }
+    }
+
+    function startRecognition() {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = currentLang;
+        recognition.interimResults = false;
+
+        recognition.onstart = function() {
+            speak("Listening...", currentLang);
+        };
+
+        recognition.onresult = function(event) {
+            const inputText = event.results[0][0].transcript;
+            talk(inputText);
+        };
+
+        recognition.onerror = function(event) {
+            console.error("Speech recognition error:", event.error);
+        };
+
+        recognition.start();
+    }
+
+    // Populate voice list on page load
+    window.onload = function() {
+        populateVoiceList();
+    };
+
+    // Listen for voices to be loaded
+    window.speechSynthesis.onvoiceschanged = function() {
+        populateVoiceList();
+    };
+</script>
+</body>
+</html>
